@@ -12,16 +12,14 @@ import {
   StatusBar,
   StyleSheet,
   Text,
+  TextInput,
   useColorScheme,
   View,
+  Button,
 } from 'react-native';
 
 import {
   Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
 } from 'react-native/Libraries/NewAppScreen';
 
 type SectionProps = PropsWithChildren<{
@@ -55,6 +53,7 @@ function Section({children, title}: SectionProps): React.JSX.Element {
 }
 
 function App(): React.JSX.Element {
+  const [bridgeIpAddr, onChangeText] = React.useState('Hello, world!');
   const isDarkMode = useColorScheme() === 'dark';
 
   const backgroundStyle = {
@@ -72,6 +71,36 @@ function App(): React.JSX.Element {
    */
   const safePadding = '5%';
 
+  const onPressConnectHub = () => {
+    console.log(bridgeIpAddr);
+    fetch('http://' + bridgeIpAddr + '/api', {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: '{"devicetype":"testing_hue_app#android testuser"}',
+    }).then(response => {
+      if(!response.ok) {
+        throw new Error('Network error');
+      }
+      return response.json();
+    })
+    .then(json => {
+      if (json[0].success === undefined) {
+        throw new Error('PRESS LINK BUTTON');
+      }
+      console.log(json[0].success.username);
+      return json;
+      }).catch(error => {
+        console.error(error);
+      });
+    };
+
+  // function setBridgeIpAddr(text: string): void {
+  //   throw new Error('Function not implemented.');
+  // }
+
   return (
     <View style={backgroundStyle}>
       <StatusBar
@@ -81,28 +110,28 @@ function App(): React.JSX.Element {
       <ScrollView
         style={backgroundStyle}>
         <View style={{paddingRight: safePadding}}>
-          <Header/>
+          {/* <Header/> */}
         </View>
         <View
           style={{
+
             backgroundColor: isDarkMode ? Colors.black : Colors.white,
             paddingHorizontal: safePadding,
             paddingBottom: safePadding,
           }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.tsx</Text> to change this
-            screen and then come back to see your edits.
+          <Section title="Philips Hue Control App">
+            <Text>Bridge Ip Addr: {'\n'}</Text>
+            <TextInput
+             style={styles.input}
+              value={bridgeIpAddr}
+              onChangeText={onChangeText}
+            />
+            <Text>{'\n'}</Text>
+            <Button
+            onPress={onPressConnectHub}
+            title="Connect"
+            color="#841584"/>
           </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
         </View>
       </ScrollView>
     </View>
@@ -125,6 +154,13 @@ const styles = StyleSheet.create({
   },
   highlight: {
     fontWeight: '700',
+  },
+  input: {
+    height: 40,
+    margin: 12,
+    borderWidth: 1,
+    padding: 10,
+    backgroundColor: Colors.white,
   },
 });
 
