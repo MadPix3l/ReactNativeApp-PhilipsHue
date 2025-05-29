@@ -7,6 +7,7 @@
 
 import React from 'react';
 import type {PropsWithChildren} from 'react';
+import IntialHubResponse from './android/app/src/models/Responses';
 import {
   ScrollView,
   StatusBar,
@@ -100,7 +101,7 @@ function App(): React.JSX.Element {
   // function setBridgeIpAddr(text: string): void {
   //   throw new Error('Function not implemented.');
   // }
-
+  
   return (
     <View style={backgroundStyle}>
       <StatusBar
