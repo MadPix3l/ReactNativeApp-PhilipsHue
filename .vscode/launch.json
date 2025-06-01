@@ -16,8 +16,16 @@
             "cwd": "${workspaceFolder}",
             "type": "reactnative",
             "request": "launch",
-            "platform": "android",
-            "isDynamic": true
+            "platform": "android"
+            // "isDynamic": true
+        },
+        {
+            "name": "Attach to packager",
+            "cwd": "${workspaceFolder}",
+            "type": "reactnative",
+            "request": "attach",
+            "sourceMaps": true,
+            "port": 8081
         }
     ]
 }

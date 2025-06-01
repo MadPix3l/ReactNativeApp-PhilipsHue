@@ -7,13 +7,12 @@
 
 import React from 'react';
 import type {PropsWithChildren} from 'react';
-import IntialHubResponse from './android/app/src/models/Responses';
+import { HueResponse, Lights, Light } from './android/app/src/models/Responses';
 import {
   ScrollView,
   StatusBar,
   StyleSheet,
   Text,
-  TextInput,
   useColorScheme,
   View,
   Button,
@@ -26,6 +25,14 @@ import {
 type SectionProps = PropsWithChildren<{
   title: string;
 }>;
+
+function needsLogin(hue: HueResponse): boolean {
+  return hue.hasOwnProperty('success') && !!hue.success;
+}
+
+function lightsList(lights: Lights<Light>): Lights<Light> {
+  return lights;
+}
 
 function Section({children, title}: SectionProps): React.JSX.Element {
   const isDarkMode = useColorScheme() === 'dark';
@@ -56,6 +63,8 @@ function Section({children, title}: SectionProps): React.JSX.Element {
 function App(): React.JSX.Element {
   const [bridgeIpAddr, onChangeText] = React.useState('Hello, world!');
   const isDarkMode = useColorScheme() === 'dark';
+  const [hueUsername, setHueUsername] = React.useState('');
+  const [allLights, setAllLights] = React.useState<Lights<Light>>({});
 
   const backgroundStyle = {
     backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
@@ -72,8 +81,47 @@ function App(): React.JSX.Element {
    */
   const safePadding = '5%';
 
+  fetch('https://discovery.meethue.com', {
+    method: 'GET',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+    },
+  }).then(response => {
+    if(!response.ok) {
+      throw new Error('Network error');
+    }
+    return response.json();
+  }).then(json => {
+    onChangeText(json[0].internalipaddress);
+  });
+
+  const onPressGetLights = () => {
+    if (hueUsername.length > 0) {
+      console.log(hueUsername);
+      fetch('http://' + bridgeIpAddr + '/api/' + hueUsername + '/lights', {
+        method: 'GET',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+        },
+      }).then(response => {
+        if(!response.ok) {
+          throw new Error('Network error');
+        }
+        return response.json();
+      })
+      .then(json => {
+        setAllLights(json);
+        console.log(allLights[4]);
+      });
+    }
+    else{
+      console.log('no username');
+    }
+  };
+
   const onPressConnectHub = () => {
-    console.log(bridgeIpAddr);
     fetch('http://' + bridgeIpAddr + '/api', {
       method: 'POST',
       headers: {
@@ -88,20 +136,21 @@ function App(): React.JSX.Element {
       return response.json();
     })
     .then(json => {
-      if (json[0].success === undefined) {
+      if (!needsLogin(json[0])) {
         throw new Error('PRESS LINK BUTTON');
       }
-      console.log(json[0].success.username);
+      setHueUsername(json[0].success.username);
       return json;
       }).catch(error => {
         console.error(error);
       });
+      console.log(hueUsername);
     };
 
   // function setBridgeIpAddr(text: string): void {
   //   throw new Error('Function not implemented.');
   // }
-  
+
   return (
     <View style={backgroundStyle}>
       <StatusBar
@@ -121,17 +170,22 @@ function App(): React.JSX.Element {
             paddingBottom: safePadding,
           }}>
           <Section title="Philips Hue Control App">
-            <Text>Bridge Ip Addr: {'\n'}</Text>
-            <TextInput
-             style={styles.input}
-              value={bridgeIpAddr}
-              onChangeText={onChangeText}
-            />
-            <Text>{'\n'}</Text>
+            <Text>Bridge IP: {bridgeIpAddr}{'\n'}</Text>
             <Button
             onPress={onPressConnectHub}
             title="Connect"
             color="#841584"/>
+            <Text>{'\n'}</Text>
+            <Button
+            onPress={onPressGetLights}
+            title="Load Lights"
+            color="#841584"/>
+            <Text>{'\n'}</Text>
+          </Section>
+          <Section title="Lights">
+            <View>{allLights.map(key, light) => (
+              <Text key={key}>{light.name}</Text>
+            )}</View>
           </Section>
         </View>
       </ScrollView>
